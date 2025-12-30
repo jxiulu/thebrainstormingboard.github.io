@@ -1,0 +1,990 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>The Brainstorming Board</title>
+  <meta name="description" content="The Brainstorming Board — The World's First B3B SaaSaaS ChatGPT Wrapper" />
+  <style>
+    :root{
+      --bg:#0b0b0c;
+      --panel:#101113;
+      --text:#f6f6f7;
+      --muted:#b7b7bb;
+      --line:rgba(255,255,255,.12);
+      --accent:#ff2d55; /* obnoxiously confident */
+      --shadow:0 10px 30px rgba(0,0,0,.35);
+      --radius:18px;
+      --radius2:24px;
+      --max:1120px;
+      --mono: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, "Liberation Mono", "Courier New", monospace;
+      --sans: ui-sans-serif, system-ui, -apple-system, Segoe UI, Roboto, Helvetica, Arial, "Apple Color Emoji", "Segoe UI Emoji";
+    }
+
+    *{ box-sizing:border-box; }
+    html,body{ height:100%; }
+    body{
+      margin:0;
+      background:
+        radial-gradient(900px 500px at 10% -10%, rgba(255,45,85,.20), transparent 60%),
+        radial-gradient(800px 600px at 90% 0%, rgba(45,190,255,.16), transparent 55%),
+        radial-gradient(900px 600px at 40% 120%, rgba(155,255,45,.10), transparent 55%),
+        var(--bg);
+      color:var(--text);
+      font-family:var(--sans);
+      letter-spacing:-0.01em;
+    }
+
+    a{ color:inherit; text-decoration:none; }
+    .wrap{ max-width:var(--max); margin:0 auto; padding:22px 18px 72px; }
+
+    /* Top bar */
+    header{
+      position:sticky; top:0;
+      z-index:10;
+      backdrop-filter: blur(14px);
+      -webkit-backdrop-filter: blur(14px);
+      background: linear-gradient(to bottom, rgba(11,11,12,.92), rgba(11,11,12,.65));
+      border-bottom: 1px solid var(--line);
+    }
+    .topbar{
+      max-width:var(--max);
+      margin:0 auto;
+      padding:14px 18px;
+      display:flex;
+      align-items:center;
+      justify-content:space-between;
+      gap:12px;
+    }
+    .brand{
+      display:flex; align-items:baseline; gap:12px;
+      min-width: 200px;
+    }
+    .dot{
+      width:10px; height:10px; border-radius:50%;
+      background: var(--accent);
+      box-shadow: 0 0 0 4px rgba(255,45,85,.16);
+      flex: 0 0 auto;
+    }
+    .brand h1{
+      margin:0;
+      font-size:18px;
+      font-weight:800;
+      letter-spacing:-0.02em;
+    }
+    .brand span{
+      font-family:var(--mono);
+      font-size:12px;
+      color:var(--muted);
+    }
+
+    .nav{
+      display:flex; align-items:center; gap:10px; flex-wrap:wrap;
+      justify-content:flex-end;
+    }
+    .pill{
+      border:1px solid var(--line);
+      background: rgba(255,255,255,.03);
+      padding:8px 10px;
+      border-radius:999px;
+      font-size:12px;
+      color:var(--muted);
+      display:flex; align-items:center; gap:8px;
+    }
+    .pill strong{ color:var(--text); font-weight:700; }
+    .btn{
+      border:1px solid var(--line);
+      background: rgba(255,255,255,.05);
+      color:var(--text);
+      padding:9px 12px;
+      border-radius:999px;
+      font-size:12px;
+      cursor:pointer;
+      transition: transform .08s ease, background .15s ease, border-color .15s ease;
+      user-select:none;
+    }
+    .btn:hover{ background: rgba(255,255,255,.08); border-color: rgba(255,255,255,.18); }
+    .btn:active{ transform: translateY(1px); }
+    .btn.primary{
+      border-color: rgba(255,45,85,.45);
+      background: rgba(255,45,85,.14);
+    }
+
+    /* Hero */
+    .hero{ padding:32px 0 18px; }
+    .hero h2{
+      margin:0;
+      font-size: clamp(36px, 6vw, 64px);
+      font-weight: 900;
+      letter-spacing:-0.04em;
+      line-height: .95;
+    }
+    .sub{
+      margin:14px 0 0;
+      font-size: 14px;
+      color: var(--muted);
+      font-family: var(--mono);
+    }
+    .sub em{ color: var(--text); font-style: normal; }
+    .lede{
+      margin:22px 0 0;
+      max-width: 64ch;
+      color: rgba(246,246,247,.86);
+      line-height:1.45;
+      font-size: 15px;
+    }
+    .lede b{ color:var(--text); }
+    .heroGrid{
+      margin-top:22px;
+      display:grid;
+      grid-template-columns: 1.2fr .8fr;
+      gap:14px;
+    }
+    @media (max-width: 860px){
+      .heroGrid{ grid-template-columns:1fr; }
+    }
+
+    .card{
+      border:1px solid var(--line);
+      background: rgba(255,255,255,.03);
+      border-radius: var(--radius2);
+      box-shadow: var(--shadow);
+      overflow:hidden;
+    }
+    .cardInset{ padding:18px; }
+    .kicker{
+      font-family: var(--mono);
+      font-size:12px;
+      color: var(--muted);
+      display:flex; gap:10px; flex-wrap:wrap;
+      align-items:center;
+    }
+    .kicker .chip{
+      border:1px solid var(--line);
+      padding:4px 8px;
+      border-radius:999px;
+      background: rgba(255,255,255,.03);
+    }
+    .bigStat{
+      margin-top:14px;
+      display:flex; gap:16px; flex-wrap:wrap;
+      align-items:baseline;
+    }
+    .bigStat .num{
+      font-size: 34px;
+      font-weight: 900;
+      letter-spacing:-0.03em;
+    }
+    .bigStat .lbl{
+      font-family: var(--mono);
+      color: var(--muted);
+      font-size: 12px;
+    }
+    .divider{
+      height:1px; background: var(--line);
+      margin:14px 0;
+    }
+
+    /* Controls */
+    .controls{
+      margin-top:18px;
+      display:flex;
+      gap:10px;
+      flex-wrap:wrap;
+      align-items:center;
+      justify-content:space-between;
+    }
+    .search{
+      flex: 1 1 300px;
+      display:flex;
+      align-items:center;
+      gap:10px;
+      border:1px solid var(--line);
+      background: rgba(0,0,0,.18);
+      padding:10px 12px;
+      border-radius: 999px;
+    }
+    .search input{
+      width:100%;
+      background:transparent;
+      border:0;
+      outline:0;
+      color:var(--text);
+      font-size:13px;
+    }
+    .tags{
+      display:flex; gap:8px; flex-wrap:wrap;
+      justify-content:flex-end;
+    }
+    .tagBtn{
+      border:1px solid var(--line);
+      background: rgba(255,255,255,.03);
+      color: var(--muted);
+      padding:7px 10px;
+      border-radius:999px;
+      font-size:12px;
+      cursor:pointer;
+      transition: background .15s ease, color .15s ease, border-color .15s ease;
+    }
+    .tagBtn.active{
+      color: var(--text);
+      border-color: rgba(255,45,85,.45);
+      background: rgba(255,45,85,.14);
+    }
+
+    /* Projects grid */
+    .grid{
+      margin-top:18px;
+      display:grid;
+      grid-template-columns: repeat(12, 1fr);
+      gap:12px;
+    }
+    .project{
+      grid-column: span 4;
+      border:1px solid var(--line);
+      background: rgba(255,255,255,.03);
+      border-radius: var(--radius2);
+      overflow:hidden;
+      cursor:pointer;
+      transition: transform .12s ease, border-color .15s ease, background .15s ease;
+      position:relative;
+    }
+    .project:hover{
+      transform: translateY(-2px);
+      border-color: rgba(255,255,255,.22);
+      background: rgba(255,255,255,.045);
+    }
+    @media (max-width: 980px){ .project{ grid-column: span 6; } }
+    @media (max-width: 620px){ .project{ grid-column: span 12; } }
+
+    .thumb{
+      height: 110px;
+      background:
+        radial-gradient(120px 70px at 12% 30%, rgba(255,45,85,.33), transparent 65%),
+        radial-gradient(180px 90px at 80% 30%, rgba(45,190,255,.24), transparent 65%),
+        radial-gradient(200px 140px at 50% 110%, rgba(155,255,45,.14), transparent 60%),
+        rgba(0,0,0,.25);
+      border-bottom: 1px solid var(--line);
+      display:flex;
+      align-items:flex-end;
+      justify-content:space-between;
+      padding:12px;
+      gap:12px;
+    }
+    .thumb .badge{
+      font-family: var(--mono);
+      font-size: 11px;
+      border:1px solid var(--line);
+      background: rgba(0,0,0,.22);
+      padding:4px 8px;
+      border-radius:999px;
+      color: var(--muted);
+      backdrop-filter: blur(10px);
+    }
+    .thumb .status{
+      font-family: var(--mono);
+      font-size: 11px;
+      color: rgba(246,246,247,.9);
+      padding:4px 8px;
+      border-radius:999px;
+      border:1px solid rgba(255,255,255,.18);
+      background: rgba(255,255,255,.05);
+    }
+    .pBody{ padding:14px 14px 16px; }
+    .pTitle{
+      margin:0;
+      font-size:16px;
+      font-weight: 850;
+      letter-spacing:-0.02em;
+      line-height:1.15;
+    }
+    .pDesc{
+      margin:8px 0 0;
+      color: rgba(246,246,247,.78);
+      font-size: 13px;
+      line-height:1.35;
+    }
+    .metaRow{
+      margin-top:12px;
+      display:flex;
+      gap:8px;
+      flex-wrap:wrap;
+      align-items:center;
+      justify-content:space-between;
+      color: var(--muted);
+      font-size:12px;
+      font-family: var(--mono);
+    }
+    .metaRow .mini{
+      border:1px solid var(--line);
+      padding:4px 8px;
+      border-radius:999px;
+      background: rgba(255,255,255,.03);
+    }
+
+    /* Footer */
+    footer{
+      margin-top:28px;
+      border-top:1px solid var(--line);
+      padding-top:18px;
+      color: var(--muted);
+      font-size: 12px;
+      display:flex;
+      gap:12px;
+      flex-wrap:wrap;
+      align-items:center;
+      justify-content:space-between;
+      font-family: var(--mono);
+    }
+    footer a{ text-decoration:underline; text-underline-offset: 3px; }
+
+    /* Modal */
+    .modalOverlay{
+      position:fixed; inset:0;
+      display:none;
+      background: rgba(0,0,0,.72);
+      backdrop-filter: blur(10px);
+      -webkit-backdrop-filter: blur(10px);
+      z-index:50;
+      padding: 18px;
+    }
+    .modalOverlay.open{ display:flex; }
+    .modal{
+      margin:auto;
+      width:min(900px, 100%);
+      border:1px solid rgba(255,255,255,.16);
+      background: rgba(16,17,19,.92);
+      border-radius: 26px;
+      box-shadow: 0 30px 80px rgba(0,0,0,.55);
+      overflow:hidden;
+    }
+    .modalTop{
+      display:flex;
+      align-items:flex-start;
+      justify-content:space-between;
+      gap:12px;
+      padding: 16px 16px 12px;
+      border-bottom:1px solid var(--line);
+    }
+    .modalTop h3{
+      margin:0;
+      font-size: 20px;
+      font-weight: 900;
+      letter-spacing:-0.03em;
+      line-height:1.1;
+    }
+    .modalTop .close{
+      border:1px solid var(--line);
+      background: rgba(255,255,255,.05);
+      color: var(--text);
+      border-radius: 999px;
+      padding: 8px 10px;
+      cursor:pointer;
+      font-size: 12px;
+      font-family: var(--mono);
+      white-space:nowrap;
+    }
+    .modalGrid{
+      display:grid;
+      grid-template-columns: 1fr 1fr;
+    }
+    @media (max-width: 860px){
+      .modalGrid{ grid-template-columns:1fr; }
+    }
+    .modalLeft{
+      padding: 16px;
+      border-right:1px solid var(--line);
+    }
+    @media (max-width: 860px){
+      .modalLeft{ border-right:0; border-bottom:1px solid var(--line); }
+    }
+    .modalHero{
+      height: 180px;
+      border:1px solid var(--line);
+      border-radius: 18px;
+      background:
+        radial-gradient(220px 120px at 10% 30%, rgba(255,45,85,.35), transparent 65%),
+        radial-gradient(260px 140px at 90% 40%, rgba(45,190,255,.26), transparent 65%),
+        radial-gradient(320px 180px at 50% 110%, rgba(155,255,45,.16), transparent 60%),
+        rgba(0,0,0,.25);
+      margin-bottom: 12px;
+      position:relative;
+      overflow:hidden;
+    }
+    .modalHero::after{
+      content:"";
+      position:absolute; inset:0;
+      background: repeating-linear-gradient(
+        0deg,
+        rgba(255,255,255,.035),
+        rgba(255,255,255,.035) 1px,
+        transparent 1px,
+        transparent 4px
+      );
+      opacity:.25;
+      pointer-events:none;
+    }
+    .modalP{
+      margin:10px 0 0;
+      color: rgba(246,246,247,.82);
+      line-height:1.5;
+      font-size: 14px;
+    }
+    .modalRight{ padding: 16px; }
+    .kv{
+      display:grid;
+      grid-template-columns: 140px 1fr;
+      gap:10px 12px;
+      font-family: var(--mono);
+      font-size: 12px;
+      color: var(--muted);
+      border:1px solid var(--line);
+      border-radius: 18px;
+      padding: 12px;
+      background: rgba(0,0,0,.12);
+    }
+    .kv b{ color: var(--text); font-weight: 800; }
+    .kv .val{ color: rgba(246,246,247,.82); }
+    .ctaRow{
+      margin-top: 12px;
+      display:flex;
+      gap:10px;
+      flex-wrap:wrap;
+    }
+
+    .srOnly{
+      position:absolute;
+      width:1px; height:1px;
+      padding:0; margin:-1px;
+      overflow:hidden; clip:rect(0,0,0,0);
+      border:0;
+    }
+  </style>
+</head>
+<body>
+  <header>
+    <div class="topbar">
+      <div class="brand" aria-label="Site title">
+        <div class="dot" aria-hidden="true"></div>
+        <h1>The Brainstorming Board</h1>
+        <span>v0.0.1-alpha-ish</span>
+      </div>
+
+      <nav class="nav" aria-label="Quick stats and actions">
+        <div class="pill" title="Totally real enterprise metrics">
+          <strong id="statCount">0</strong> projects · <strong id="statTags">0</strong> tags
+        </div>
+        <button class="btn primary" id="randomBtn" type="button">Surprise me</button>
+        <a class="btn" href="#about">About</a>
+      </nav>
+    </div>
+  </header>
+
+  <main class="wrap">
+    <section class="hero" aria-label="Hero">
+      <h2>The Brainstorming Board</h2>
+      <p class="sub">The World's First <em>B3B SaaSaaS ChatGPT Wrapper</em></p>
+      <p class="lede">
+        Welcome to the future of Enterprise Innovation™.
+        We iterate at <b>the speed of like 3G</b>, ship on <b>vulnerable weekends</b>, and measure success in
+        <b>Business</b>.
+      </p>
+
+      <div class="heroGrid">
+        <div class="card">
+          <div class="cardInset">
+            <div class="kicker">
+              <span class="chip">MISSION</span>
+              <span class="chip">SCOPE CREEP: ENABLED</span>
+              <span class="chip">ETHICS: OPTIONAL</span>
+            </div>
+
+            <div class="bigStat" aria-label="Fake KPI">
+              <div>
+                <div class="num" id="kpiNum">0</div>
+                <div class="lbl">certified brainstorms per quarter (CBPQ)</div>
+              </div>
+              <div>
+                <div class="num" id="kpiUptime">14.7%</div>
+                <div class="lbl">uptime</div>
+              </div>
+            </div>
+
+            <div class="divider"></div>
+
+            <div class="controls" aria-label="Search and filters">
+              <label class="search" aria-label="Search projects">
+                <span style="font-family:var(--mono); color:var(--muted); font-size:12px;">SEARCH</span>
+                <input id="searchInput" type="search" placeholder="e.g. ‘infinite’, ‘forbidden’, ‘printer’…" autocomplete="off" />
+              </label>
+
+              <div class="tags" id="tagRow" aria-label="Tag filters"></div>
+            </div>
+          </div>
+        </div>
+
+        <div class="card">
+          <div class="cardInset">
+            <div class="kicker">
+              <span class="chip">FEATURED DROP</span>
+              <span class="chip">LIMITED TIME: FOREVER</span>
+            </div>
+            <h3 style="margin:12px 0 0; font-size:18px; font-weight:900; letter-spacing:-0.03em;">
+              “B3B Enterprise™”
+            </h3>
+            <p class="modalP" style="margin-top:10px;">
+              A premium plan where we promise more Buttons and a Dashboard that mentions "AI” at least three times.
+            </p>
+            <div class="ctaRow">
+              <button class="btn primary" id="openFeatured" type="button">View the drop</button>
+              <button class="btn" id="copyPitch" type="button">Copy pitch deck</button>
+            </div>
+            <p class="sub" style="margin-top:14px;">
+              *No refunds. No funding. No problem.
+            </p>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <section aria-label="Projects">
+      <div class="grid" id="projectGrid"></div>
+    </section>
+
+    <section id="about" style="margin-top:26px;" aria-label="About">
+      <div class="card">
+        <div class="cardInset">
+          <div class="kicker"><span class="chip">ABOUT</span><span class="chip">LEGAL DISCLAIMER: for chillers only</span></div>
+          <p class="modalP" style="margin-top:12px;">
+            The Brainstorming Board is a gallery of Concepts, Ideas, and Theories. Nothing here is for purchase, advice, or implementation. If you are looking for that please close this tab and open Excel. Fuck you.
+          </p>
+          <p class="modalP">
+            Want to add a project? Go away.
+          </p>
+        </div>
+      </div>
+    </section>
+
+    <footer>
+      <div>© <span id="year"></span> The Brainstorming Board. All rights reserved.</div>
+      <div>
+        <a href="#" id="openManifesto">read manifesto</a> ·
+        <a href="#" id="openTerms">terms (idk what that is)</a>
+      </div>
+    </footer>
+  </main>
+
+  <!-- Modal -->
+  <div class="modalOverlay" id="modalOverlay" role="dialog" aria-modal="true" aria-labelledby="modalTitle">
+    <div class="modal">
+      <div class="modalTop">
+        <div>
+          <h3 id="modalTitle">Project Title</h3>
+          <div class="kicker" style="margin-top:8px;" id="modalChips"></div>
+        </div>
+        <button class="close" id="modalClose" type="button" aria-label="Close project">ESC / CLOSE</button>
+      </div>
+
+      <div class="modalGrid">
+        <div class="modalLeft">
+          <div class="modalHero" aria-hidden="true"></div>
+          <p class="modalP" id="modalBody"></p>
+        </div>
+
+        <div class="modalRight">
+          <div class="kv" id="modalKV" aria-label="Project details"></div>
+          <div class="ctaRow">
+            <button class="btn primary" id="modalRandom" type="button">Open another</button>
+            <button class="btn" id="modalCopyLink" type="button">Copy link</button>
+          </div>
+          <p class="sub" style="margin-top:14px;">
+            Tip: deep-links work — <span style="color:var(--text);" id="modalHashHint">#project=slug</span>
+          </p>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <script>
+    // ---- EDIT THESE PROJECTS ----
+    // Add your friends' projects here.
+    // You can deep-link to a project via: index.html#project=the-slug
+    const projects = [
+      {
+        title: "Infinite Receipt Printer",
+        slug: "infinite-receipt-printer",
+        by: "The Board",
+        year: 2025,
+        status: "LIVE",
+        tags: ["physical", "annoying", "performance"],
+        blurb: "A compliance-grade thermal printer that produces actionable affirmation receipts at industrial scale.",
+        body:
+          "We built an always-on receipt printer because the market demanded constant documentation of your worth. " +
+          "Each printout is a time-stamped micro-contract stating you are ‘doing great’ with the legal precision of a parking ticket. " +
+          "When it runs out of paper, it stops believing in you — a feature we call Adaptive Confidence Allocation (ACA).",
+        link: null
+      },
+      {
+        title: "AI-Generated Apology Generator (Non-Refundable)",
+        slug: "apology-generator",
+        by: "The Board",
+        year: 2025,
+        status: "BETA",
+        tags: ["ai", "social", "regret"],
+        blurb: "Enterprise-grade accountability, delivered in a tone that can be plausibly denied in court.",
+        body:
+          "Choose your incident category (ghosting, tone, forgetting your friend’s birthday). " +
+          "The generator returns an apology with one (1) authentic-feeling sentence, followed by three (3) strategically placed ambiguities. " +
+          "It also includes a closing line that implies growth without specifying what changed. " +
+          "Refunds are unavailable because the real product is learning and we cannot ship that.",
+        link: null
+      },
+      {
+        title: "The Forbidden Gatorade Flavor Index",
+        slug: "forbidden-gatorade-index",
+        by: "The Board",
+        year: 2025,
+        status: "ARCHIVED",
+        tags: ["data", "taste", "science-ish"],
+        blurb: "A peer-reviewed(ish) dataset of flavors that should exist, evaluated with unwavering seriousness.",
+        body:
+          "We conducted a longitudinal taste study using a panel of experts and a methodology. " +
+          "Flavors include ‘Airport Carpet’, ‘Printer Heat’, and ‘Worn Hoodie’. " +
+          "Key finding: gatorade is already a tragedy; we simply added citations. " +
+          "The index is archived to protect the public.",
+        link: null
+      },
+      {
+        title: "Startup Name Generator That Only Produces Threats",
+        slug: "startup-threat-generator",
+        by: "The Board",
+        year: 2025,
+        status: "LIVE",
+        tags: ["text", "branding", "menace"],
+        blurb: "A branding assistant that refuses to disrupt markets quietly.",
+        body:
+          "Other generators output names like ‘Nimbus’ and ‘SynergyFlow’. Ours outputs the truth: " +
+          "‘PAY ME OR I WILL PIVOT INTO YOUR FAMILY GROUP CHAT.’ " +
+          "This offers go-to-market clarity. " +
+          "Investors described the product as ‘high-conviction’ before going completely silent.",
+        link: null
+      },
+      {
+        title: "The B3B Enterprise™ Dashboard",
+        slug: "b3b-enterprise-dashboard",
+        by: "The Board",
+        year: 2025,
+        status: "LIVE",
+        tags: ["saas", "meta", "dashboard"],
+        blurb: "A single pane of glass for KPIs you can’t define powered by a framework you’re not allowed to question.",
+        body:
+          "Entrepreneurs always ask: who’s this 2? And who’s this 4? But they never ask who’s this 3. " +
+          "B3B Enterprise™ is our answer: an executive dashboard dedicated to the underserved middle digit. " +
+          "It ships with Synergy Meter™, Alignment Heatmap™, and a graph that always goes up because down would be negative sentiment. " +
+          "Finally, visibility into what matters: the number between the numbers.",
+        link: null
+      },
+      {
+        title: "The Brainstorming Board's Museum Audio Guide ",
+        slug: "museum-audio-roast",
+        by: "The Board",
+        year: 2025,
+        status: "BETA",
+        tags: ["audio", "art", "cruelty"],
+        blurb: "A premium interpretive layer that explains the art by professionally diagnosing your soul.",
+        body:
+          "Traditional audio guides describe brushstrokes and historical context. Ours describes you. " +
+          "It detects emotional resonance and whether you’re ‘Understanding’. " +
+          "Then it assigns a persona: ‘Pretending’, ‘Trying’, or ‘Lost’. " +
+          "This creates curatorial personalization that takes you seriously, whether or not you deserve it.",
+        link: null
+      }
+    ];
+
+    // ---- UI wiring ----
+    const els = {
+      grid: document.getElementById("projectGrid"),
+      tagRow: document.getElementById("tagRow"),
+      search: document.getElementById("searchInput"),
+      statCount: document.getElementById("statCount"),
+      statTags: document.getElementById("statTags"),
+      kpiNum: document.getElementById("kpiNum"),
+      year: document.getElementById("year"),
+
+      modalOverlay: document.getElementById("modalOverlay"),
+      modalTitle: document.getElementById("modalTitle"),
+      modalChips: document.getElementById("modalChips"),
+      modalBody: document.getElementById("modalBody"),
+      modalKV: document.getElementById("modalKV"),
+      modalClose: document.getElementById("modalClose"),
+      modalRandom: document.getElementById("modalRandom"),
+      modalCopyLink: document.getElementById("modalCopyLink"),
+      modalHashHint: document.getElementById("modalHashHint"),
+
+      randomBtn: document.getElementById("randomBtn"),
+      openFeatured: document.getElementById("openFeatured"),
+      copyPitch: document.getElementById("copyPitch"),
+      openManifesto: document.getElementById("openManifesto"),
+      openTerms: document.getElementById("openTerms"),
+    };
+
+    const allTags = Array.from(new Set(projects.flatMap(p => p.tags))).sort((a,b)=>a.localeCompare(b));
+    let activeTag = "all";
+    let query = "";
+
+    function escapeHtml(s){
+      return String(s).replace(/[&<>"']/g, ch => ({ "&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;" }[ch]));
+    }
+
+    function setHashFor(slug){
+      const url = new URL(window.location.href);
+      url.hash = `project=${encodeURIComponent(slug)}`;
+      history.replaceState(null, "", url.toString());
+    }
+
+    function clearHash(){
+      const url = new URL(window.location.href);
+      url.hash = "";
+      history.replaceState(null, "", url.toString());
+    }
+
+    function getSlugFromHash(){
+      const h = (window.location.hash || "").replace(/^#/, "");
+      if (!h) return null;
+      const [k, v] = h.split("=");
+      if (k !== "project") return null;
+      return decodeURIComponent(v || "");
+    }
+
+    function renderTags(){
+      const buttons = [
+        { label:"All", value:"all" },
+        ...allTags.map(t => ({ label: t, value: t }))
+      ];
+
+      els.tagRow.innerHTML = buttons.map(b => {
+        const isActive = b.value === activeTag ? "active" : "";
+        return `<button class="tagBtn ${isActive}" type="button" data-tag="${escapeHtml(b.value)}">${escapeHtml(b.label)}</button>`;
+      }).join("");
+
+      els.tagRow.querySelectorAll("button").forEach(btn => {
+        btn.addEventListener("click", () => {
+          activeTag = btn.dataset.tag || "all";
+          renderTags();
+          renderGrid();
+        });
+      });
+
+      els.statTags.textContent = allTags.length;
+    }
+
+    function filteredProjects(){
+      return projects.filter(p => {
+        const tagOk = activeTag === "all" ? true : p.tags.includes(activeTag);
+        const q = query.trim().toLowerCase();
+        const qOk = !q ? true : (
+          p.title.toLowerCase().includes(q) ||
+          p.by.toLowerCase().includes(q) ||
+          p.tags.join(" ").toLowerCase().includes(q) ||
+          (p.blurb || "").toLowerCase().includes(q)
+        );
+        return tagOk && qOk;
+      });
+    }
+
+    function renderGrid(){
+      const list = filteredProjects();
+      els.statCount.textContent = list.length;
+
+      els.grid.innerHTML = list.map(p => {
+        const tag = p.tags[0] || "misc";
+        const badges = `
+          <span class="badge">${escapeHtml(tag)}</span>
+          <span class="status">${escapeHtml(p.status)}</span>
+        `;
+
+        return `
+          <article class="project" tabindex="0" role="button" aria-label="Open project ${escapeHtml(p.title)}" data-slug="${escapeHtml(p.slug)}">
+            <div class="thumb">${badges}</div>
+            <div class="pBody">
+              <h4 class="pTitle">${escapeHtml(p.title)}</h4>
+              <p class="pDesc">${escapeHtml(p.blurb)}</p>
+              <div class="metaRow">
+                <span class="mini">BY: ${escapeHtml(p.by)}</span>
+                <span class="mini">${escapeHtml(String(p.year))}</span>
+              </div>
+            </div>
+          </article>
+        `;
+      }).join("");
+
+      els.grid.querySelectorAll(".project").forEach(card => {
+        const slug = card.dataset.slug;
+        const open = () => openProject(slug);
+        card.addEventListener("click", open);
+        card.addEventListener("keydown", (e) => {
+          if (e.key === "Enter" || e.key === " ") { e.preventDefault(); open(); }
+        });
+      });
+    }
+
+    function openProject(slug){
+      const p = projects.find(x => x.slug === slug) || projects[0];
+      if (!p) return;
+
+      els.modalTitle.textContent = p.title;
+      els.modalBody.textContent = p.body;
+
+      els.modalChips.innerHTML = `
+        <span class="chip">BY ${escapeHtml(p.by)}</span>
+        <span class="chip">${escapeHtml(p.status)}</span>
+        ${p.tags.map(t => `<span class="chip">${escapeHtml(t)}</span>`).join("")}
+      `;
+
+      els.modalKV.innerHTML = `
+        <div><b>Slug</b></div><div class="val">${escapeHtml(p.slug)}</div>
+        <div><b>Year</b></div><div class="val">${escapeHtml(String(p.year))}</div>
+        <div><b>Owner</b></div><div class="val">${escapeHtml(p.by)}</div>
+        <div><b>Compliance</b></div><div class="val">probably not</div>
+        <div><b>ROI</b></div><div class="val">spiritual</div>
+        <div><b>Link</b></div><div class="val">${p.link ? `<a href="${escapeHtml(p.link)}" target="_blank" rel="noopener">open</a>` : "none (cowardly)"}</div>
+      `;
+
+      els.modalHashHint.textContent = `#project=${p.slug}`;
+      els.modalOverlay.classList.add("open");
+      setHashFor(p.slug);
+      // focus close button for accessibility
+      setTimeout(() => els.modalClose.focus(), 0);
+    }
+
+    function closeModal(){
+      els.modalOverlay.classList.remove("open");
+      clearHash();
+    }
+
+    function randomProject(){
+      const list = filteredProjects();
+      const pick = list[Math.floor(Math.random() * list.length)] || projects[0];
+      openProject(pick.slug);
+    }
+
+    // Fake KPI
+    function updateKpis(){
+      // CBPQ: Certified Brainstorms Per Quarter (completely made up)
+      const base = projects.length * 7;
+      const wobble = Math.floor(Math.random() * 9);
+      els.kpiNum.textContent = String(base + wobble);
+      els.year.textContent = String(new Date().getFullYear());
+    }
+
+    // Controls
+    els.search.addEventListener("input", () => {
+      query = els.search.value || "";
+      renderGrid();
+    });
+
+    els.randomBtn.addEventListener("click", randomProject);
+
+    els.openFeatured.addEventListener("click", () => openProject("b3b-enterprise-dashboard"));
+
+    els.copyPitch.addEventListener("click", async () => {
+      const pitch = [
+        "THE BRAINSTORMING BOARD — B3B SaaSaaS ChatGPT Wrapper",
+        "",
+        "Problem: People are thinking in private.",
+        "Solution: Make it everyone's problem.",
+        "Moat: energy + audacity.",
+        "Traction: emotional experience",
+        "Ask: $7M seed to build more buttons."
+      ].join("\n");
+      try{
+        await navigator.clipboard.writeText(pitch);
+        els.copyPitch.textContent = "Copied";
+        setTimeout(()=>els.copyPitch.textContent="Copy pitch deck", 1100);
+      }catch{
+        alert("Clipboard blocked. Your OS chose privacy today.");
+      }
+    });
+
+    // Modal events
+    els.modalClose.addEventListener("click", closeModal);
+    els.modalOverlay.addEventListener("click", (e) => {
+      if (e.target === els.modalOverlay) closeModal();
+    });
+    document.addEventListener("keydown", (e) => {
+      if (e.key === "Escape" && els.modalOverlay.classList.contains("open")) closeModal();
+    });
+
+    els.modalRandom.addEventListener("click", () => {
+      // pick a different project (ideally)
+      const current = getSlugFromHash();
+      const pool = projects.filter(p => p.slug !== current);
+      const pick = pool[Math.floor(Math.random() * pool.length)] || projects[0];
+      openProject(pick.slug);
+    });
+
+    els.modalCopyLink.addEventListener("click", async () => {
+      try{
+        await navigator.clipboard.writeText(window.location.href);
+        els.modalCopyLink.textContent = "Copied";
+        setTimeout(()=>els.modalCopyLink.textContent="Copy link", 1100);
+      }catch{
+        alert("Clipboard blocked. Copy manually like it's 2008.");
+      }
+    });
+
+    // Extra “docs”
+    els.openManifesto.addEventListener("click", (e) => {
+      e.preventDefault();
+      const p = {
+        title: "B3B Manifesto",
+        slug: "manifesto",
+        by: "The Board",
+        year: new Date().getFullYear(),
+        status: "LIVE",
+        tags: ["vibes", "policy", "mischief"],
+        body:
+          "We believe in:\n" +
+          "1) shipping first drafts\n" +
+          "2) operationalizing jokes\n" +
+          "3) treating minor inconveniences as product features\n\n" +
+          "We reject:\n" +
+          "— reasonable expectations\n" +
+          "— clean roadmaps\n" +
+          "— the concept of ‘done’"
+      };
+      // temp render as modal
+      els.modalTitle.textContent = p.title;
+      els.modalBody.textContent = p.body;
+      els.modalChips.innerHTML = `<span class="chip">BY ${p.by}</span><span class="chip">${p.status}</span>${p.tags.map(t=>`<span class="chip">${t}</span>`).join("")}`;
+      els.modalKV.innerHTML = `
+        <div><b>Document</b></div><div class="val">totally legit</div>
+        <div><b>Clause</b></div><div class="val">as-is, as-vibes</div>
+        <div><b>Governing law</b></div><div class="val">group chat</div>
+        <div><b>Arbitration</b></div><div class="val">coin flip</div>
+        <div><b>Return policy</b></div><div class="val">no</div>
+        <div><b>Contact</b></div><div class="val">do not</div>
+      `;
+      els.modalHashHint.textContent = "#project=manifesto";
+      els.modalOverlay.classList.add("open");
+      // don't set hash for doc
+    });
+
+    els.openTerms.addEventListener("click", (e) => {
+      e.preventDefault();
+      alert("TERMS: If you like our organization, you agree. If you don’t, you still agree. Thank you for your cooperation :)");
+    });
+
+    // Init
+    renderTags();
+    renderGrid();
+    updateKpis();
+
+    const slug = getSlugFromHash();
+    if (slug){
+      const exists = projects.some(p => p.slug === slug);
+      if (exists) openProject(slug);
+    }
+  </script>
+</body>
+</html>
